@@ -110,3 +110,37 @@ def execute_fs_read(
         "content": text,
         "truncated": truncated,
     })
+
+
+FS_WRITE_SCHEMA = {
+    "description": "Write or overwrite a text file in the workspace. Path is relative to workspace root; parent directories are created if needed.",
+    "parameters": {
+        "type": "object",
+        "properties": {
+            "path": {
+                "type": "string",
+                "description": "Relative path from workspace root (e.g. 'out.txt' or 'reports/summary.md')",
+            },
+            "content": {
+                "type": "string",
+                "description": "Full text content to write to the file",
+            },
+        },
+        "required": ["path", "content"],
+        "additionalProperties": False,
+    },
+}
+
+
+def execute_fs_write(path: str, content: str, workspace_root: str) -> str:
+    """Write content to a file in the workspace. Returns JSON string for the agent."""
+    try:
+        full = _resolve(workspace_root, path)
+    except Exception as e:
+        return json.dumps({"success": False, "path": path, "error": str(e)})
+    try:
+        full.parent.mkdir(parents=True, exist_ok=True)
+        full.write_text(content, encoding="utf-8")
+    except OSError as err:
+        return json.dumps({"success": False, "path": path, "error": str(err)})
+    return json.dumps({"success": True, "path": path})

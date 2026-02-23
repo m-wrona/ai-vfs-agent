@@ -7,20 +7,25 @@ from .config import get_config
 from .tools import get_tools, execute_tool
 
 
-def _system_prompt(daytona_enabled: bool) -> str:
-    base = """You are a helpful assistant that can read files from the workspace.
+def _system_prompt() -> str:
+    return """You are a helpful assistant that can read and write workspace files and use skills.
 
-Use the fs_read tool to:
-- List the workspace root: use path "."
-- Read a file: use path like "filename.txt" or "src/main.py"
-- Optionally use "lines" for a line range (e.g. "10-50")
+## FILES
+Use fs_read to list (path ".") or read files (path "filename" or "dir/file"). Use "lines" for a line range.
+Use fs_write to create or overwrite files (path, content). Parent directories are created if needed.
+
+## SKILLS WORKFLOW (when skill tools are available)
+1. Use list_skills to see available capabilities (e.g. fs_read, fs_write)
+2. Use get_skill to load a skill's API (parameters, usage)
+3. Call the tool (e.g. fs_read, fs_write) with the parameters described
+4. When execute_code is available: run Python in sandbox; use read_output to read files your code created
+
+## RULES
+- For file/directory questions, use fs_read first
+- To create or change a file, use fs_write with path and content
+- For skill-based tasks, discover skills first; load schemas before calling tools
+- Be concise and efficient
 """
-    if daytona_enabled:
-        base += """
-When the user wants to run code, do calculations, or run scripts, use execute_code. Code runs in an isolated Daytona sandbox. Use print() to produce output.
-"""
-    base += "\nBe concise. When the user asks about files or a directory, use fs_read first to explore or read content."
-    return base
 
 
 def run_agent_loop(
@@ -36,7 +41,7 @@ def run_agent_loop(
     client = OpenAI(api_key=api_key)
     openai_tools = get_tools(workspace_root, daytona_enabled=daytona_enabled)
     messages = [
-        {"role": "system", "content": _system_prompt(daytona_enabled)},
+        {"role": "system", "content": _system_prompt()},
         {"role": "user", "content": user_input},
     ]
 
@@ -51,6 +56,7 @@ def run_agent_loop(
         if not choice.message.tool_calls:
             return choice.message.content or ""
 
+        messages.append(choice.message)
         for tc in choice.message.tool_calls:
             name = tc.function.name
             try:
@@ -61,7 +67,6 @@ def run_agent_loop(
                 result = execute_tool(name, args, workspace_root, daytona_enabled=daytona_enabled)
             except Exception as e:
                 result = json.dumps({"error": str(e)})
-            messages.append(choice.message)
             messages.append({
                 "role": "tool",
                 "tool_call_id": tc.id,
@@ -96,9 +101,9 @@ def main():
     print(f"Workspace: {workspace}")
     if daytona_enabled:
         print(f"Code runs in isolation: Daytona sandbox {sandbox_id}")
-        print("Tools: fs_read, execute_code (Python in sandbox)")
+        print("Tools: fs_read, list_skills, get_skill, execute_code, read_output, shell")
     else:
-        print("Tools: fs_read (list dir / read file)")
+        print("Tools: fs_read, fs_write (list/read/write files)")
     print('Type "exit" to quit.\n')
 
     try:

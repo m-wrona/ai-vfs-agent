@@ -85,12 +85,39 @@ def run_code_in_sandbox(code: str, timeout: Optional[int] = 30) -> str:
     """Execute Python code in the Daytona sandbox. Returns stdout or error message."""
     if _sandbox is None:
         return "[error] No sandbox (Daytona not initialized or init failed)."
+    # Ensure workspace is on path so "from skills import products" works
+    preamble = "import sys\nsys.path.insert(0, 'workspace')\n"
     try:
-        resp = _sandbox.process.code_run(code, timeout=timeout)
+        resp = _sandbox.process.code_run(preamble + code, timeout=timeout)
         out = (resp.artifacts and getattr(resp.artifacts, "stdout", None)) or resp.result or ""
         exit_code = getattr(resp, "exit_code", -1)
         if exit_code != 0:
             return f"[exit {exit_code}]\n{out}"
         return out.strip() or "(no output)"
+    except Exception as e:
+        return f"[error] {e}"
+
+
+def download_file(remote_path: str) -> str:
+    """Download a file from the sandbox. Path relative to sandbox work dir (e.g. result.txt or workspace/out.txt)."""
+    if _sandbox is None:
+        return "[error] No sandbox."
+    path = remote_path.lstrip("/").replace("\\", "/")
+    try:
+        data = _sandbox.fs.download_file(path)
+        return data.decode("utf-8", errors="replace") if isinstance(data, bytes) else str(data)
+    except Exception as e:
+        return f"Error reading {remote_path}: {e}"
+
+
+def exec_command(command: str, cwd: Optional[str] = None) -> str:
+    """Run a shell command in the sandbox. Returns combined stdout or error."""
+    if _sandbox is None:
+        return "[error] No sandbox."
+    try:
+        resp = _sandbox.process.exec(command, cwd=cwd or _work_dir)
+        out = (resp.artifacts and getattr(resp.artifacts, "stdout", None)) or getattr(resp, "result", "") or "(no output)"
+        exit_code = getattr(resp, "exit_code", -1)
+        return f"[exit {exit_code}]\n{out}".strip()
     except Exception as e:
         return f"[error] {e}"
