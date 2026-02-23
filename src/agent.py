@@ -21,14 +21,20 @@ Workflow:
 (1) Use list_skills to see all available skills (built-in and dynamic). 
 (2) Use get_skill to load a skill's API (parameters, usage). 
 (3) For built-in skills: call the tool by name. For dynamic skills: use execute_code and import from skills.<name> (e.g. from skills.orders import ...). 
-(4) When execute_code is available: run Python in the sandbox; use read_output to read files your code created.
+(4) When execute_code is available: run Python in the sandbox; use read_output to read files your code created. For product/order or other domain data, use the dynamic skills in execute_code (import from skills.*), not fs_read on the raw data files.
 
 ## RULES
-- For file/directory questions, use fs_read first
-- To create or change a file, use fs_write with path and content
 - For skill-based tasks, discover skills first; load schemas before calling tools
-- Before presenting results: state in points your plan of actions and why you use each skill (built-in or dynamic), then give the final answer
+- When list_skills shows domain skills (e.g. products, orders): use them. Call get_skill then run logic in execute_code with "from skills.<name> import ...". Do NOT use fs_read on the underlying data files (e.g. products.md, orders.md) for that computation—use the skills API in execute_code so the solution stays correct and maintainable.
 - Be concise and efficient
+- Before presenting results: state in points your plan of actions and why you use each skill (built-in or dynamic), then give the final answer
+- do not write to files temporary or final results unless asked to do so
+
+## FINAL RESPONSE (required)
+When you are done (including after any tool use), you MUST reply with exactly two parts. Do not end with only tool calls or a promise to continue.
+1. **Plan:** In 2–4 bullet points: what you did and which skills you used (and why).
+2. **Result:** The actual answer: numbers, data, or the requested output. If the task could not be completed (e.g. list_skills or execute_code returned an error or are not available), say so clearly and what is missing (e.g. "Sandbox is required for execute_code; only fs_read and fs_write are available.").
+Never leave the user without a Result section.
 
 ## EXAMPLE
 Task: "Calculate total revenue by category"
@@ -55,7 +61,9 @@ Actions:
            revenue[cat] = revenue.get(cat, 0) + p["price"] * o["quantity"]
    print(revenue)
 5. read_output if result was written to a file; otherwise use execute_code stdout.
-Then present: plan/skills rationale (above) and the final answer (revenue by category).
+6. Final reply must include:
+   **Plan:** (bullet points: list_skills → get_skill products/orders → execute_code to aggregate)
+   **Result:** (the revenue-by-category dict or table). If execute_code/list_skills were unavailable, say so and that the sandbox is required.
 """
 
 
