@@ -1,6 +1,9 @@
 # ai-vfs-agent
 
-Agents co-operating using virtual FS and sandbox.
+An LLM agent that uses a **virtual workspace filesystem** (read/write via `fs_read`/`fs_write`) and an optional **sandbox** (Daytona) to run code. 
+The agent discovers **built-in and dynamic skills** (`list_skills` / `get_skill`); domain skills (e.g. products, orders) live in `workspace/skills/*.py` and are used inside the sandbox via `execute_code`. 
+Each turn returns a **Plan** (what it did and which skills it used) and a **Result** (the answer or a clear failure message).
+
 
 Tools:
 
