@@ -31,6 +31,7 @@ def get_config() -> dict:
     openai_cfg = raw.get("openai") or {}
     daytona_cfg = raw.get("daytona") or {}
     workspace_cfg = raw.get("workspace") or {}
+    agentfs_cfg = raw.get("agentfs") or {}
 
     api_key = os.environ.get("OPENAI_API_KEY") or openai_cfg.get("api_key") or ""
     daytona_key = os.environ.get("DAYTONA_API_KEY") or daytona_cfg.get("api_key") or ""
@@ -39,6 +40,9 @@ def get_config() -> dict:
     if not os.path.isabs(workspace_root):
         workspace_root = str(_ROOT / workspace_root)
 
+    agentfs_enabled = bool(agentfs_cfg.get("enabled", False))
+    agentfs_id = (agentfs_cfg.get("id") or os.environ.get("AGENTFS_ID") or "ai-vfs-agent").strip()
+
     return {
         "openai_api_key": api_key,
         "openai_model": openai_cfg.get("model", "gpt-4o-mini"),
@@ -46,4 +50,6 @@ def get_config() -> dict:
         "workspace_root": workspace_root,
         "max_iterations": raw.get("max_iterations", 10),
         "timeout_seconds": float(raw.get("timeout_seconds", 5.0)),
+        "agentfs_enabled": agentfs_enabled,
+        "agentfs_id": agentfs_id,
     }

@@ -14,3 +14,8 @@ daytona:
 # Directory the agent can read from (fs_read tool)
 workspace:
   root: "./workspace"
+
+# Optional: record tool calls to AgentFS for audit/stats (requires: pip install agentfs-sdk)
+# agentfs:
+#   enabled: true
+#   id: "ai-vfs-agent"   # or set AGENTFS_ID

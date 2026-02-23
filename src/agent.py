@@ -67,6 +67,8 @@ def run_agent_loop(
     max_iterations: int = 10,
     daytona_enabled: bool = False,
     timeout_seconds: float = 5.0,
+    agentfs_enabled: bool = False,
+    agentfs_id: str = "",
 ):
     """Run one agent turn: possibly multiple tool calls, then return final text. Stops after timeout_seconds."""
     client = OpenAI(api_key=api_key)
@@ -100,7 +102,12 @@ def run_agent_loop(
             except json.JSONDecodeError:
                 args = {}
             try:
-                result = execute_tool(name, args, workspace_root, daytona_enabled=daytona_enabled)
+                result = execute_tool(
+                    name, args, workspace_root,
+                    daytona_enabled=daytona_enabled,
+                    agentfs_enabled=agentfs_enabled,
+                    agentfs_id=agentfs_id,
+                )
             except Exception as e:
                 result = json.dumps({"error": str(e)})
             messages.append({
@@ -135,6 +142,8 @@ def main():
             print("Continuing without sandbox (fs_read, fs_write still work).\n")
 
     print(f"Workspace: {workspace}")
+    if cfg.get("agentfs_enabled"):
+        print("AgentFS: tool calls recorded (install agentfs-sdk)")
     if daytona_enabled:
         print(f"Code runs in isolation: Daytona sandbox {sandbox_id}")
         print("Tools: fs_read, fs_write, list_skills, get_skill, execute_code, read_output, shell")
@@ -161,6 +170,8 @@ def main():
                     max_iterations=cfg["max_iterations"],
                     daytona_enabled=daytona_enabled,
                     timeout_seconds=cfg["timeout_seconds"],
+                    agentfs_enabled=cfg.get("agentfs_enabled", False),
+                    agentfs_id=cfg.get("agentfs_id", ""),
                 )
                 print(f"\nAssistant: {text}\n")
             except Exception as e:

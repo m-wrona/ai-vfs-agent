@@ -70,33 +70,47 @@ def get_tools(workspace_root: str, daytona_enabled: bool = False):
     return tools
 
 
-def execute_tool(name: str, arguments: dict, workspace_root: str, daytona_enabled: bool = False):
-    """Execute a tool by name. Raises KeyError if unknown."""
+def execute_tool(
+    name: str,
+    arguments: dict,
+    workspace_root: str,
+    daytona_enabled: bool = False,
+    agentfs_enabled: bool = False,
+    agentfs_id: str = "",
+):
+    """Execute a tool by name. Raises KeyError if unknown. When agentfs_enabled, tool calls are recorded to AgentFS."""
+    result: str
     if name == "fs_read":
-        return execute_fs_read(workspace_root=workspace_root, **arguments)
-    if name == "fs_write":
-        return execute_fs_write(workspace_root=workspace_root, **arguments)
-    if name == "list_skills":
+        result = execute_fs_read(workspace_root=workspace_root, **arguments)
+    elif name == "fs_write":
+        result = execute_fs_write(workspace_root=workspace_root, **arguments)
+    elif name == "list_skills":
         from ..skill_registry import list_skills as _list_skills
-        return json.dumps({"skills": _list_skills(workspace_root)}, indent=2)
-    if name == "get_skill":
+        result = json.dumps({"skills": _list_skills(workspace_root)}, indent=2)
+    elif name == "get_skill":
         from ..skill_registry import get_skill_schema
         schema = get_skill_schema(arguments.get("name", ""), workspace_root)
         if not schema:
-            return json.dumps({"error": "Skill not found: " + arguments.get("name", "")})
-        return json.dumps(schema, indent=2)
-    if name == "execute_code":
+            result = json.dumps({"error": "Skill not found: " + arguments.get("name", "")})
+        else:
+            result = json.dumps(schema, indent=2)
+    elif name == "execute_code":
         if daytona_enabled:
             from ..sandbox import run_code_in_sandbox
-            return run_code_in_sandbox(arguments.get("code", ""))
-        from ..sandbox import run_code_local
-        return run_code_local(workspace_root, arguments.get("code", ""))
-    if not daytona_enabled:
-        raise KeyError(f"Unknown tool: {name}")
-    if name == "read_output":
+            result = run_code_in_sandbox(arguments.get("code", ""))
+        else:
+            from ..sandbox import run_code_local
+            result = run_code_local(workspace_root, arguments.get("code", ""))
+    elif name == "read_output" and daytona_enabled:
         from ..sandbox import download_file
-        return download_file(arguments.get("path", ""))
-    if name == "shell":
+        result = download_file(arguments.get("path", ""))
+    elif name == "shell" and daytona_enabled:
         from ..sandbox import exec_command
-        return exec_command(arguments.get("command", ""))
-    raise KeyError(f"Unknown tool: {name}")
+        result = exec_command(arguments.get("command", ""))
+    else:
+        raise KeyError(f"Unknown tool: {name}")
+
+    if agentfs_enabled:
+        from .agentfs_tracking import track_tool_call
+        track_tool_call(agentfs_id, name, arguments, result)
+    return result

@@ -1,6 +1,6 @@
 pyyaml>=6.0
 openai>=1.0.0
-# Optional: AgentFS
+# Optional: AgentFS (tool-call tracking when agentfs.enabled in config)
 # agentfs-sdk>=0.6.0
 # Daytona: code runs in isolated sandbox (requires Python 3.10+)
 daytona>=0.100.0

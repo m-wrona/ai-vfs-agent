@@ -7,7 +7,7 @@ Each turn returns a **Plan** (what it did and which skills it used) and a **Resu
 
 Tools:
 
-* [AgentFS](https://www.agentfs.ai) — virtual filesystem and tooling for AI agents. Not wired in by default; install `agentfs-sdk` and extend `src/tools/` to use AgentFS instead of or alongside the built-in `fs_read`/`fs_write` for workspace access.
+* [AgentFS](https://www.agentfs.ai) — when enabled in config (`agentfs.enabled: true` and optional `agentfs.id`), every tool call (fs_read, fs_write, list_skills, get_skill, execute_code, etc.) is recorded to an AgentFS SQLite store (`.agentfs/{id}.db`) for audit and tool-call stats. Install `agentfs-sdk` and set `agentfs.enabled` in `config.yaml` to use it.
 * [Daytona](https://www.daytona.io) — when configured (`DAYTONA_API_KEY`), the agent runs `execute_code` in an isolated cloud sandbox: the workspace is synced in, Python runs there (so skills and file access are confined), and you get `read_output` / `shell`. Without Daytona, code runs locally in a subprocess (same skills, no isolation).
 
 
@@ -34,7 +34,8 @@ Minimal Python agent that reads files from a directory using boot tools.
 1. **Config (YAML + env)**  
    Copy `config.example.yaml` to `config.yaml` and set:
    - `openai.api_key` (or `OPENAI_API_KEY`)
-   - `daytona.api_key` (or `DAYTONA_API_KEY`) — optional, for future sandbox tools  
+   - `daytona.api_key` (or `DAYTONA_API_KEY`) — optional, for sandbox code execution  
+   - `agentfs.enabled` and optional `agentfs.id` — optional, to record tool calls to AgentFS (requires `pip install agentfs-sdk`)  
    Set `workspace.root` to the directory the agent can read (default `./workspace`).
 
 2. **Boot tools**  
