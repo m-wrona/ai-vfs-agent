@@ -14,17 +14,17 @@ Tools:
 ```
 User Prompt
      ↓
-Agent Harness
+Agent Harness (tools, workspace, optional Daytona sandbox / AgentFS)
      ↓
-LLM (plan) <- Tool capabilities
+LLM ← tool definitions (fs_read, fs_write, list_skills, get_skill, execute_code, …)
      ↓
-Plan execution Tool calls (i.e. fs_read)
+Tool calls (e.g. list_skills → get_skill → execute_code or fs_read / fs_write)
      ↓
-Execution (filesystem)
+Execution (workspace filesystem + optional sandbox for skills / execute_code)
      ↓
-Result returns to LLM
+Tool results → back to LLM (loop until done)
      ↓
-Final response
+Final response: Plan (what was done, skills used) + Result (answer or failure)
 ```
 
 ## Local development
