@@ -1,7 +1,9 @@
-"""Daytona sandbox: create, sync workspace, run code in isolation, destroy."""
+"""Daytona sandbox: create, sync workspace, run code in isolation, destroy. Local fallback when Daytona is disabled."""
 
 import os
+import subprocess
 import sys
+import tempfile
 from pathlib import Path
 from typing import Optional, Any
 
@@ -92,6 +94,33 @@ def destroy_sandbox() -> None:
 
 def get_sandbox() -> Optional[Any]:
     return _sandbox
+
+
+def run_code_local(workspace_root: str, code: str, timeout: int = 15) -> str:
+    """Execute Python code locally with workspace on path (skills importable). Fallback when no Daytona sandbox."""
+    preamble = "import sys\nsys.path.insert(0, %r)\n" % (os.path.abspath(workspace_root),)
+    full_code = preamble + code
+    try:
+        with tempfile.NamedTemporaryFile(mode="w", suffix=".py", delete=False) as f:
+            f.write(full_code)
+            path = f.name
+        result = subprocess.run(
+            [sys.executable, path],
+            capture_output=True,
+            text=True,
+            timeout=timeout,
+            cwd=workspace_root,
+        )
+        os.unlink(path)
+        out = (result.stdout or "").strip()
+        err = (result.stderr or "").strip()
+        if result.returncode != 0:
+            return f"[exit {result.returncode}]\n{err}\n{out}".strip()
+        return out or "(no output)"
+    except subprocess.TimeoutExpired:
+        return "[error] Code run timed out."
+    except Exception as e:
+        return f"[error] {e}"
 
 
 def run_code_in_sandbox(code: str, timeout: Optional[int] = 30) -> str:

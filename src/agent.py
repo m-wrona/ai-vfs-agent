@@ -137,9 +137,9 @@ def main():
     print(f"Workspace: {workspace}")
     if daytona_enabled:
         print(f"Code runs in isolation: Daytona sandbox {sandbox_id}")
-        print("Tools: fs_read, list_skills, get_skill, execute_code, read_output, shell")
+        print("Tools: fs_read, fs_write, list_skills, get_skill, execute_code, read_output, shell")
     else:
-        print("Tools: fs_read, fs_write (list/read/write files)")
+        print("Tools: fs_read, fs_write, list_skills, get_skill, execute_code (local run, no sandbox)")
     print('Type "exit" to quit.\n')
 
     try:

@@ -54,16 +54,16 @@ SHELL_SCHEMA = {
 
 
 def get_tools(workspace_root: str, daytona_enabled: bool = False):
-    """Return list of tool definitions for OpenAI and the executor."""
+    """Return list of tool definitions for OpenAI and the executor. list_skills, get_skill, execute_code always available; read_output and shell only when sandbox enabled."""
     tools = [
         {"type": "function", "function": {"name": "fs_read", "description": FS_READ_SCHEMA["description"], "parameters": FS_READ_SCHEMA["parameters"]}},
         {"type": "function", "function": {"name": "fs_write", "description": FS_WRITE_SCHEMA["description"], "parameters": FS_WRITE_SCHEMA["parameters"]}},
+        {"type": "function", "function": {"name": "list_skills", "description": LIST_SKILLS_SCHEMA["description"], "parameters": LIST_SKILLS_SCHEMA["parameters"]}},
+        {"type": "function", "function": {"name": "get_skill", "description": GET_SKILL_SCHEMA["description"], "parameters": GET_SKILL_SCHEMA["parameters"]}},
+        {"type": "function", "function": {"name": "execute_code", "description": EXECUTE_CODE_SCHEMA["description"], "parameters": EXECUTE_CODE_SCHEMA["parameters"]}},
     ]
     if daytona_enabled:
         tools.extend([
-            {"type": "function", "function": {"name": "list_skills", "description": LIST_SKILLS_SCHEMA["description"], "parameters": LIST_SKILLS_SCHEMA["parameters"]}},
-            {"type": "function", "function": {"name": "get_skill", "description": GET_SKILL_SCHEMA["description"], "parameters": GET_SKILL_SCHEMA["parameters"]}},
-            {"type": "function", "function": {"name": "execute_code", "description": EXECUTE_CODE_SCHEMA["description"], "parameters": EXECUTE_CODE_SCHEMA["parameters"]}},
             {"type": "function", "function": {"name": "read_output", "description": READ_OUTPUT_SCHEMA["description"], "parameters": READ_OUTPUT_SCHEMA["parameters"]}},
             {"type": "function", "function": {"name": "shell", "description": SHELL_SCHEMA["description"], "parameters": SHELL_SCHEMA["parameters"]}},
         ])
@@ -76,8 +76,6 @@ def execute_tool(name: str, arguments: dict, workspace_root: str, daytona_enable
         return execute_fs_read(workspace_root=workspace_root, **arguments)
     if name == "fs_write":
         return execute_fs_write(workspace_root=workspace_root, **arguments)
-    if not daytona_enabled:
-        raise KeyError(f"Unknown tool: {name}")
     if name == "list_skills":
         from ..skill_registry import list_skills as _list_skills
         return json.dumps({"skills": _list_skills(workspace_root)}, indent=2)
@@ -88,8 +86,13 @@ def execute_tool(name: str, arguments: dict, workspace_root: str, daytona_enable
             return json.dumps({"error": "Skill not found: " + arguments.get("name", "")})
         return json.dumps(schema, indent=2)
     if name == "execute_code":
-        from ..sandbox import run_code_in_sandbox
-        return run_code_in_sandbox(arguments.get("code", ""))
+        if daytona_enabled:
+            from ..sandbox import run_code_in_sandbox
+            return run_code_in_sandbox(arguments.get("code", ""))
+        from ..sandbox import run_code_local
+        return run_code_local(workspace_root, arguments.get("code", ""))
+    if not daytona_enabled:
+        raise KeyError(f"Unknown tool: {name}")
     if name == "read_output":
         from ..sandbox import download_file
         return download_file(arguments.get("path", ""))
