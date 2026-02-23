@@ -80,10 +80,10 @@ def execute_tool(name: str, arguments: dict, workspace_root: str, daytona_enable
         raise KeyError(f"Unknown tool: {name}")
     if name == "list_skills":
         from ..skill_registry import list_skills as _list_skills
-        return json.dumps({"skills": _list_skills()}, indent=2)
+        return json.dumps({"skills": _list_skills(workspace_root)}, indent=2)
     if name == "get_skill":
         from ..skill_registry import get_skill_schema
-        schema = get_skill_schema(arguments.get("name", ""))
+        schema = get_skill_schema(arguments.get("name", ""), workspace_root)
         if not schema:
             return json.dumps({"error": "Skill not found: " + arguments.get("name", "")})
         return json.dumps(schema, indent=2)

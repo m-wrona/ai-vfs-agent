@@ -1,5 +1,15 @@
 """Orders skill: order data linked to products via productId. Data loaded from workspace/orders.md."""
 
+# Agent-facing skill description (required for dynamic skill registry)
+SKILL_DESCRIPTION = "Order data linked to products via productId (id, productId, customerId, quantity, date, status)"
+SKILL_PYTHON_API = """
+# Module: skills.orders (add to path: workspace)
+orders: list[dict]  # id, productId, customerId, quantity, date, status
+def get_orders_by_product(product_id: str) -> list[dict]
+def get_orders_by_customer(customer_id: str) -> list[dict]
+def get_orders_by_status(status: str) -> list[dict]
+""".strip()
+
 import os
 
 def _load_orders():

@@ -1,5 +1,15 @@
 """Products skill: catalog with pricing and inventory. Data loaded from workspace/products.md."""
 
+# Agent-facing skill description (required for dynamic skill registry)
+SKILL_DESCRIPTION = "Product catalog with pricing and inventory data (id, name, price, category, stock)"
+SKILL_PYTHON_API = """
+# Module: skills.products (add to path: workspace)
+products: list[dict]  # id, name, price, category, stock
+def get_product_by_id(id: str) -> dict | None
+def get_products_by_category(category: str) -> list[dict]
+def get_in_stock_products() -> list[dict]
+""".strip()
+
 import os
 
 

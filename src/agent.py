@@ -95,8 +95,8 @@ def main():
             if sb:
                 sandbox_id = getattr(sb, "id", None) or "(Daytona sandbox)"
         except Exception as e:
-            print(f"Daytona sandbox unavailable: {e}")
-            print("Continuing without isolated code execution.\n")
+            print(f"Daytona sandbox: {e}")
+            print("Continuing without sandbox (fs_read, fs_write still work).\n")
 
     print(f"Workspace: {workspace}")
     if daytona_enabled:

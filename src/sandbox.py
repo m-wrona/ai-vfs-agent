@@ -1,6 +1,7 @@
 """Daytona sandbox: create, sync workspace, run code in isolation, destroy."""
 
 import os
+import sys
 from pathlib import Path
 from typing import Optional, Any
 
@@ -8,12 +9,24 @@ _sandbox: Optional[Any] = None
 _daytona: Optional[Any] = None
 _work_dir: Optional[str] = None
 
+# Daytona SDK uses type union syntax (X | Y) that requires Python 3.10+
+_PYTHON_MIN_DAYTONA = (3, 10)
+
 
 def _get_daytona(api_key: str):
+    if sys.version_info < _PYTHON_MIN_DAYTONA:
+        raise RuntimeError(
+            "Daytona sandbox requires Python 3.10 or newer (you have {}.{}). "
+            "Use a newer Python or run without DAYTONA_API_KEY.".format(
+                sys.version_info.major, sys.version_info.minor
+            )
+        )
     try:
         from daytona import Daytona, DaytonaConfig
     except ImportError:
-        raise ImportError("Daytona SDK required for sandbox: pip install daytona_sdk")
+        raise ImportError(
+            "Daytona SDK not installed. Install with: pip install daytona"
+        )
     config = DaytonaConfig(api_key=api_key)
     return Daytona(config)
 
