@@ -10,15 +10,18 @@ from .tools import get_tools, execute_tool
 def _system_prompt() -> str:
     return """You are a helpful assistant that can read and write workspace files and use skills.
 
-## FILES
+## FILES (built-in skills)
 Use fs_read to list (path ".") or read files (path "filename" or "dir/file"). Use "lines" for a line range.
 Use fs_write to create or overwrite files (path, content). Parent directories are created if needed.
 
-## SKILLS WORKFLOW (when skill tools are available)
-1. Use list_skills to see available capabilities (e.g. fs_read, fs_write)
-2. Use get_skill to load a skill's API (parameters, usage)
-3. Call the tool (e.g. fs_read, fs_write) with the parameters described
-4. When execute_code is available: run Python in sandbox; use read_output to read files your code created
+## SKILLS (built-in + dynamic)
+- Built-in skills (fs_read, fs_write) are always available as tools; call them directly.
+- Dynamic skills come from workspace/skills/*.py and are discovered at runtime.
+Workflow: 
+(1) Use list_skills to see all available skills (built-in and dynamic). 
+(2) Use get_skill to load a skill's API (parameters, usage). 
+(3) For built-in skills: call the tool by name. For dynamic skills: use execute_code and import from skills.<name> (e.g. from skills.orders import ...). 
+(4) When execute_code is available: run Python in the sandbox; use read_output to read files your code created.
 
 ## RULES
 - For file/directory questions, use fs_read first
