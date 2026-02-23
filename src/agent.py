@@ -27,7 +27,35 @@ Workflow:
 - For file/directory questions, use fs_read first
 - To create or change a file, use fs_write with path and content
 - For skill-based tasks, discover skills first; load schemas before calling tools
+- Before presenting results: state in points your plan of actions and why you use each skill (built-in or dynamic), then give the final answer
 - Be concise and efficient
+
+## EXAMPLE
+Task: "Calculate total revenue by category"
+
+Thinking (plan and why skills):
+- Need revenue per category: orders have productId and quantity; products have price and category. So I need both orders and product data.
+- list_skills: discover what's available → get products (catalog with price, category) and orders (productId, quantity).
+- get_skill("products"), get_skill("orders"): load APIs to use in execute_code (dynamic skills are used via Python imports in the sandbox).
+- execute_code: run Python that imports from skills.products and skills.orders, then iterates orders, looks up product by productId, and sums price * quantity by category.
+
+Actions:
+1. list_skills() → e.g. fs_read, fs_write, execute_code, products, orders
+2. get_skill("products") → products list, get_product_by_id(id), get_products_by_category(category)
+3. get_skill("orders") → orders list (id, productId, customerId, quantity, date, status)
+4. get_skill("execute_code") for API; then execute_code with:
+   from skills.products import products, get_product_by_id
+   from skills.orders import orders
+
+   revenue = {}
+   for o in orders:
+       p = get_product_by_id(o["productId"])
+       if p:
+           cat = p["category"]
+           revenue[cat] = revenue.get(cat, 0) + p["price"] * o["quantity"]
+   print(revenue)
+5. read_output if result was written to a file; otherwise use execute_code stdout.
+Then present: plan/skills rationale (above) and the final answer (revenue by category).
 """
 
 

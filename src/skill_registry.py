@@ -28,6 +28,14 @@ fs_read(path: str, lines: str | None = None) -> JSON
 fs_write(path: str, content: str) -> JSON
 """.strip(),
     },
+    "execute_code": {
+        "description": "Execute Python in the sandbox. Import dynamic skills (from skills.<name> import ...). Use print() for output; use open() to write files, then read_output(path) to read them.",
+        "python_api": """
+# Tool: execute_code
+# Run Python in the sandbox. Workspace and skills dir are on path. Use print() for stdout; use open() to write files, then read_output(path) to read them.
+execute_code(code: str) -> JSON (stdout and stderr)
+""".strip(),
+    },
 }
 
 
