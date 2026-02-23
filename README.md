@@ -7,8 +7,8 @@ Each turn returns a **Plan** (what it did and which skills it used) and a **Resu
 
 Tools:
 
-* [AgentFS](https://www.agentfs.ai)
-* [Daytona](https://www.daytona.io)
+* [AgentFS](https://www.agentfs.ai) — virtual filesystem and tooling for AI agents. Not wired in by default; install `agentfs-sdk` and extend `src/tools/` to use AgentFS instead of or alongside the built-in `fs_read`/`fs_write` for workspace access.
+* [Daytona](https://www.daytona.io) — when configured (`DAYTONA_API_KEY`), the agent runs `execute_code` in an isolated cloud sandbox: the workspace is synced in, Python runs there (so skills and file access are confined), and you get `read_output` / `shell`. Without Daytona, code runs locally in a subprocess (same skills, no isolation).
 
 
 ```
