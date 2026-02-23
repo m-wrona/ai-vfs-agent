@@ -1,0 +1,13 @@
+# Copy to config.yaml and fill in your keys.
+# Keys can also be set via env: OPENAI_API_KEY, DAYTONA_API_KEY (override YAML).
+
+openai:
+  api_key: ""  # or set OPENAI_API_KEY
+  model: "gpt-4o-mini"
+
+daytona:
+  api_key: ""  # or set DAYTONA_API_KEY (optional; for sandbox tools)
+
+# Directory the agent can read from (fs_read tool)
+workspace:
+  root: "./workspace"

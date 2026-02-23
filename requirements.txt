@@ -1,0 +1,5 @@
+pyyaml>=6.0
+openai>=1.0.0
+# Optional: uncomment to use AgentFS / Daytona
+# agentfs-sdk>=0.6.0
+# daytona-sdk>=0.1.0

@@ -1,0 +1,4 @@
+Hello from the workspace.
+
+This directory is the agent's workspace root. Use fs_read with path "." to list
+and path "sample.txt" to read this file.
