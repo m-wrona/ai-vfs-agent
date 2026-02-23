@@ -1,6 +1,7 @@
 """Simple agent loop: user prompt → LLM → tool calls (e.g. fs_read) → result → response."""
 
 import json
+import time
 from openai import OpenAI
 
 from .config import get_config
@@ -10,31 +11,21 @@ from .tools import get_tools, execute_tool
 def _system_prompt() -> str:
     return """You are a helpful assistant that can read and write workspace files and use skills.
 
-## FILES (built-in skills)
-Use fs_read to list (path ".") or read files (path "filename" or "dir/file"). Use "lines" for a line range.
-Use fs_write to create or overwrite files (path, content). Parent directories are created if needed.
-
-## SKILLS (built-in + dynamic)
-- Built-in skills (fs_read, fs_write) are always available as tools; call them directly.
-- Dynamic skills come from workspace/skills/*.py and are discovered at runtime.
-Workflow: 
+## Workflow: 
 (1) Use list_skills to see all available skills (built-in and dynamic). 
 (2) Use get_skill to load a skill's API (parameters, usage). 
 (3) For built-in skills: call the tool by name. For dynamic skills: use execute_code and import from skills.<name> (e.g. from skills.orders import ...). 
 (4) When execute_code is available: run Python in the sandbox; use read_output to read files your code created. For product/order or other domain data, use the dynamic skills in execute_code (import from skills.*), not fs_read on the raw data files.
 
 ## RULES
-- For skill-based tasks, discover skills first; load schemas before calling tools
-- When list_skills shows domain skills (e.g. products, orders): use them. Call get_skill then run logic in execute_code with "from skills.<name> import ...". Do NOT use fs_read on the underlying data files (e.g. products.md, orders.md) for that computation—use the skills API in execute_code so the solution stays correct and maintainable.
-- Be concise and efficient
+- Always discover skills first - don't assume what's available
+- Load skill schemas before using them in code
+- Code runs in Python in an isolated Daytona sandbox
+- Import skills using import Python statemnts
+- Use print to output results
+- Save larger results in files
+- Be efficient: process and filter data in code, not in conversation
 - Before presenting results: state in points your plan of actions and why you use each skill (built-in or dynamic), then give the final answer
-- do not write to files temporary or final results unless asked to do so
-
-## FINAL RESPONSE (required)
-When you are done (including after any tool use), you MUST reply with exactly two parts. Do not end with only tool calls or a promise to continue.
-1. **Plan:** In 2–4 bullet points: what you did and which skills you used (and why).
-2. **Result:** The actual answer: numbers, data, or the requested output. If the task could not be completed (e.g. list_skills or execute_code returned an error or are not available), say so clearly and what is missing (e.g. "Sandbox is required for execute_code; only fs_read and fs_write are available.").
-Never leave the user without a Result section.
 
 ## EXAMPLE
 Task: "Calculate total revenue by category"
@@ -75,21 +66,27 @@ def run_agent_loop(
     workspace_root: str,
     max_iterations: int = 10,
     daytona_enabled: bool = False,
+    timeout_seconds: float = 5.0,
 ):
-    """Run one agent turn: possibly multiple tool calls, then return final text."""
+    """Run one agent turn: possibly multiple tool calls, then return final text. Stops after timeout_seconds."""
     client = OpenAI(api_key=api_key)
     openai_tools = get_tools(workspace_root, daytona_enabled=daytona_enabled)
     messages = [
         {"role": "system", "content": _system_prompt()},
         {"role": "user", "content": user_input},
     ]
+    deadline = time.monotonic() + timeout_seconds
 
     for _ in range(max_iterations):
+        remaining = deadline - time.monotonic()
+        if remaining <= 0:
+            return f"[Agent stopped: time limit ({timeout_seconds:.0f}s) exceeded.]"
         resp = client.chat.completions.create(
             model=model,
             messages=messages,
             tools=openai_tools,
             tool_choice="auto",
+            timeout=min(remaining, 30.0),
         )
         choice = resp.choices[0]
         if not choice.message.tool_calls:
@@ -163,6 +160,7 @@ def main():
                     workspace_root=workspace,
                     max_iterations=cfg["max_iterations"],
                     daytona_enabled=daytona_enabled,
+                    timeout_seconds=cfg["timeout_seconds"],
                 )
                 print(f"\nAssistant: {text}\n")
             except Exception as e:

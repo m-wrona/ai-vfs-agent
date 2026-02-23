@@ -1,6 +1,9 @@
 # Copy to config.yaml and fill in your keys.
 # Keys can also be set via env: OPENAI_API_KEY, DAYTONA_API_KEY (override YAML).
 
+# Agent turn time limit (seconds); stop after this even if not finished
+timeout_seconds: 5
+
 openai:
   api_key: ""  # or set OPENAI_API_KEY
   model: "gpt-4o-mini"

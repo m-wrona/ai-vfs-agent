@@ -45,4 +45,5 @@ def get_config() -> dict:
         "daytona_api_key": daytona_key,
         "workspace_root": workspace_root,
         "max_iterations": raw.get("max_iterations", 10),
+        "timeout_seconds": float(raw.get("timeout_seconds", 5.0)),
     }
