@@ -13,7 +13,7 @@ User Prompt
      ↓
 Agent Harness
      ↓
-LLM (plan)
+LLM (plan) <- Tool capabilities
      ↓
 Tool call (i.e. fs_read)
      ↓
@@ -24,8 +24,7 @@ Result returns to LLM
 Final response
 ```
 
-
-## Python setup (learn AgentFS / Daytona)
+## Local development
 
 Minimal Python agent that reads files from a directory using boot tools.
 
@@ -41,11 +40,10 @@ Minimal Python agent that reads files from a directory using boot tools.
 
 3. **Run the agent**  
    ```bash
-   python3 -m venv .venv && source .venv/bin/activate  # or Windows: .venv\Scripts\activate
+   python3 -m venv .venv && source .venv/bin/activate  
    pip install -r requirements.txt
    python run_agent.py
    ```  
-   Then ask e.g. “What’s in the workspace?” or “Read sample.txt”.
 
 # Docs
 

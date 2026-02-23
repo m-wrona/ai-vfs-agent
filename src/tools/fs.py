@@ -2,6 +2,7 @@
 
 import json
 from pathlib import Path
+from typing import Optional
 
 FS_READ_SCHEMA = {
     "description": "Read a file or list a directory in the workspace. Use path '.' to list root; use path 'filename' or 'dir/file' to read or list.",
@@ -54,7 +55,7 @@ def _read_lines(content: str, lines_spec: str) -> str:
 def execute_fs_read(
     path: str,
     workspace_root: str,
-    lines: str | None = None,
+    lines: Optional[str] = None,
 ) -> str:
     """List directory or read file; returns JSON string for the agent."""
 
